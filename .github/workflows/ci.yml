@@ -1,0 +1,25 @@
+name: CI
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+      - name: Backend build+test+coverage
+        working-directory: apps/api-spring
+        run: ./gradlew test jacocoTestReport jacocoTestCoverageVerification
+      - uses: pnpm/action-setup@v4
+        with: { version: 9 }
+      - name: Frontend test+coverage
+        working-directory: apps/web
+        run: |
+          pnpm i
+          pnpm coverage
+      - name: Enforce frontend coverage≥80%
+        working-directory: apps/web
+        run: node ../../scripts/check_coverage_frontend.mjs coverage/coverage-summary.json 80
